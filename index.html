@@ -812,6 +812,59 @@
     background: var(--checker-b);
     border-radius: 3px;
   }
+
+  /* ─── TOUCH SUPPORT ─── */
+  #pixelCanvas, .canvas-wrap {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* ─── MOBILE RESPONSIVE ─── */
+  @media (max-width: 700px) {
+    body { padding: 8px 4px 24px; }
+    .header {
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+    }
+    .header-badge { display: none; }
+    .header-back-btn { font-size: 11px; padding: 3px 8px; }
+    .workspace {
+      gap: 10px;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .canvas-panel { width: 100%; }
+    .canvas-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    #pixelCanvas, #refCanvas, #gridCanvas, #selCanvas {
+      max-width: 100%;
+      height: auto !important;
+    }
+    .side-panel {
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .side-panel .panel-block {
+      flex: 1 1 45%;
+      min-width: 150px;
+    }
+    .tool-row { justify-content: center; }
+    .tool-btn { font-size: 10px; padding: 5px 6px; }
+    .size-grid {
+      grid-template-columns: repeat(2, 1fr);
+      padding: 0 12px;
+    }
+    .size-btn { padding: 14px 8px; }
+    .size-btn .size-label { font-size: 18px; }
+  }
 </style>
 </head>
 <body>
@@ -2076,8 +2129,26 @@ mainCanvas.addEventListener('mouseleave', () => {
     renderMain();
   }
   isDrawing = false; lastCell = null;
-  document.getElementById('coordDisplay').textContent = 'X:-- Y:--';  // coordinate display stays as-is
+  document.getElementById('coordDisplay').textContent = 'X:-- Y:--';
 });
+
+// ─── Touch → Mouse bridge ────────────────────
+function touchToMouse(type, e) {
+  if (e.touches.length > 1) return; // ignore multi-touch
+  const t = e.touches[0] || e.changedTouches[0];
+  if (!t) return;
+  e.preventDefault();
+  const mouseEvt = new MouseEvent(type, {
+    clientX: t.clientX,
+    clientY: t.clientY,
+    button: 0,
+    bubbles: true,
+  });
+  mainCanvas.dispatchEvent(mouseEvt);
+}
+mainCanvas.addEventListener('touchstart', e => touchToMouse('mousedown', e), { passive: false });
+mainCanvas.addEventListener('touchmove',  e => touchToMouse('mousemove', e), { passive: false });
+mainCanvas.addEventListener('touchend',   e => touchToMouse('mouseup', e),   { passive: false });
 
 function applyPaint(cell) {
   if (cell.x < 0 || cell.x >= SIZE || cell.y < 0 || cell.y >= SIZE) return;
