@@ -1,0 +1,27 @@
+{
+  "name": "PIXEL FORGE — スプライトエディタ",
+  "short_name": "Pixel Forge",
+  "description": "Multi-size pixel art sprite editor with animation support",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f4ef",
+  "theme_color": "#d97706",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["graphics", "design", "utilities"]
+}
