@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 <title>PIXEL FORGE</title>
 <style>
-  /* System fonts for offline support */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
   :root {
     /* Claude light UI palette */
@@ -2252,9 +2252,9 @@ function shiftPixels(dx, dy) {
   const tmp = cloneFrameData(data);
   for (let y = 0; y < SIZE; y++)
     for (let x = 0; x < SIZE; x++) {
-      const nx = (x + dx + SIZE) % SIZE;
-      const ny = (y + dy + SIZE) % SIZE;
-      const src = getPixelIdx(nx, ny);
+      const sx = (x - dx + SIZE) % SIZE;
+      const sy = (y - dy + SIZE) % SIZE;
+      const src = getPixelIdx(sx, sy);
       const dst = getPixelIdx(x, y);
       data[dst] = tmp[src]; data[dst+1] = tmp[src+1];
       data[dst+2] = tmp[src+2]; data[dst+3] = tmp[src+3];
