@@ -2408,49 +2408,25 @@ function toHex(c) {
 // ダイアログを使う。ブラウザ実行時は従来の a.click() にフォールバック。
 const _inTauri = !!(window.__TAURI_INTERNALS__);
 
-function _isMobile() {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || ('ontouchstart' in window && window.innerWidth < 800);
-}
-
 async function _downloadFallback(filename, blobOrDataURL) {
   // Convert to Blob if needed
   let blob;
   if (typeof blobOrDataURL === 'string') {
-    // data URL → Blob
     const res = await fetch(blobOrDataURL);
     blob = await res.blob();
   } else {
     blob = blobOrDataURL;
   }
 
-  // Mobile: try Web Share API first, then open in new tab
-  if (_isMobile()) {
-    if (navigator.share && navigator.canShare) {
-      try {
-        const file = new File([blob], filename, { type: blob.type });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: filename });
-          return;
-        }
-      } catch (e) {
-        if (e.name === 'AbortError') return; // user cancelled
-      }
-    }
-    // Fallback: open in new tab for long-press save
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    return;
-  }
-
-  // Desktop: standard download
+  // Try standard <a download> first (works on desktop and most Android Chrome)
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
+  a.href = url;
   a.download = filename;
-  a.href = URL.createObjectURL(blob);
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
 }
 
 async function _tauriNativeSave(filename, ext, dataBase64) {
