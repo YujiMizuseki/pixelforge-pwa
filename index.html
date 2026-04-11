@@ -2463,14 +2463,24 @@ function _blobToBase64(blob) {
 }
 
 function exportPNG() {
-  const tmp = document.createElement('canvas');
-  tmp.width = SIZE; tmp.height = SIZE;
-  const tctx = tmp.getContext('2d');
+  // 1:1 original
+  const src = document.createElement('canvas');
+  src.width = SIZE; src.height = SIZE;
+  const sctx = src.getContext('2d');
   const imgData = new ImageData(SIZE, SIZE);
   imgData.data.set(frames[currentFrame]);
-  tctx.putImageData(imgData, 0, 0);
-  const dataURL = tmp.toDataURL('image/png');
-  const filename = `sprite_f${currentFrame+1}.png`;
+  sctx.putImageData(imgData, 0, 0);
+
+  // Scale up for crisp pixel art viewing
+  const scale = Math.max(1, Math.floor(512 / SIZE));
+  const out = document.createElement('canvas');
+  out.width = SIZE * scale; out.height = SIZE * scale;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = false;
+  octx.drawImage(src, 0, 0, SIZE * scale, SIZE * scale);
+
+  const dataURL = out.toDataURL('image/png');
+  const filename = `sprite_f${currentFrame+1}_${SIZE}x${SIZE}_${scale}x.png`;
   if (_inTauri) {
     _tauriNativeSave(filename, 'png', _dataURLtoBase64(dataURL));
   } else {
@@ -2610,7 +2620,15 @@ function buildSpriteSheetCanvas() {
 
 function exportSpriteSheet() {
   const sheet = buildSpriteSheetCanvas();
-  const dataURL = sheet.toDataURL('image/png');
+  // Scale up for crisp pixel art
+  const scale = Math.max(1, Math.floor(512 / SIZE));
+  const out = document.createElement('canvas');
+  out.width = sheet.width * scale;
+  out.height = sheet.height * scale;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = false;
+  octx.drawImage(sheet, 0, 0, out.width, out.height);
+  const dataURL = out.toDataURL('image/png');
   if (_inTauri) {
     _tauriNativeSave('spritesheet.png', 'png', _dataURLtoBase64(dataURL));
   } else {
