@@ -2518,9 +2518,14 @@ function handleImport(e) {
     try {
       const data = JSON.parse(ev.target.result);
       if (data.frames) {
-        // Restore canvas size if JSON has different size
-        if (data.size && data.size !== SIZE) {
-          startEditor(data.size);
+        // Ensure editor is started with correct size
+        const targetSize = data.size || SIZE || 16;
+        if (!document.getElementById('sizeSelector').classList.contains('hidden')) {
+          // Editor not started yet — start it first
+          startEditor(targetSize);
+        } else if (targetSize !== SIZE) {
+          // Editor running but different size — reinitialize
+          startEditor(targetSize);
         }
         frames = data.frames.map(f => new Uint8ClampedArray(f));
         history = frames.map(f => [cloneFrameData(f)]);
@@ -2529,7 +2534,7 @@ function handleImport(e) {
         renderAll();
         renderFrameRow();
       }
-    } catch(err) { alert('Invalid JSON'); }
+    } catch(err) { alert('JSON読み込みエラー: ' + err.message); }
   };
   reader.readAsText(file);
   e.target.value = '';
