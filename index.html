@@ -873,7 +873,7 @@
 <div id="sizeSelector">
   <div class="size-selector-title">🎮 Pixel Forge</div>
   <div class="size-selector-sub">キャンバスサイズを選択してください</div>
-  <div style="font-size:11px;color:var(--dim2);margin-top:-24px;margin-bottom:24px;">v1.2.0</div>
+  <div style="font-size:11px;color:var(--dim2);margin-top:-24px;margin-bottom:24px;">v1.3.0</div>
   <div class="size-grid">
     <button class="size-btn" onclick="startEditor(16)">
       <div class="size-icon"></div>
@@ -2478,11 +2478,22 @@ function exportPNG() {
   }
 }
 
+function _frameToPNG(frameData) {
+  const tmp = document.createElement('canvas');
+  tmp.width = SIZE; tmp.height = SIZE;
+  const tctx = tmp.getContext('2d');
+  const imgData = new ImageData(SIZE, SIZE);
+  imgData.data.set(frameData);
+  tctx.putImageData(imgData, 0, 0);
+  return tmp.toDataURL('image/png');
+}
+
 function exportJSON() {
   const data = {
-    version: 1,
+    version: 2,
     size: SIZE,
     frames: frames.map(f => Array.from(f)),
+    images: frames.map(f => _frameToPNG(f)),
     palette: PALETTE
   };
   const jsonStr = JSON.stringify(data);
@@ -2507,6 +2518,10 @@ function handleImport(e) {
     try {
       const data = JSON.parse(ev.target.result);
       if (data.frames) {
+        // Restore canvas size if JSON has different size
+        if (data.size && data.size !== SIZE) {
+          startEditor(data.size);
+        }
         frames = data.frames.map(f => new Uint8ClampedArray(f));
         history = frames.map(f => [cloneFrameData(f)]);
         historyIndex = frames.map(() => 0);
