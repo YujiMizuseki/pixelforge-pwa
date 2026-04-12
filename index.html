@@ -873,7 +873,7 @@
 <div id="sizeSelector">
   <div class="size-selector-title">🎮 Pixel Forge</div>
   <div class="size-selector-sub">キャンバスサイズを選択してください</div>
-  <div style="font-size:11px;color:var(--dim2);margin-top:-24px;margin-bottom:24px;">v1.5.0</div>
+  <div style="font-size:11px;color:var(--dim2);margin-top:-24px;margin-bottom:24px;">v1.6.0</div>
   <div class="size-grid">
     <button class="size-btn" onclick="startEditor(16)">
       <div class="size-icon"></div>
@@ -2516,7 +2516,15 @@ function _blobToBase64(blob) {
   });
 }
 
+function _askFilename(defaultName) {
+  const name = prompt('ファイル名を入力してください', defaultName);
+  return name === null ? null : (name.trim() || defaultName);
+}
+
 function exportPNG() {
+  const defaultName = `sprite_${SIZE}x${SIZE}_f${currentFrame+1}.png`;
+  const filename = _askFilename(defaultName);
+  if (!filename) return;
   const tmp = document.createElement('canvas');
   tmp.width = SIZE; tmp.height = SIZE;
   const tctx = tmp.getContext('2d');
@@ -2524,7 +2532,6 @@ function exportPNG() {
   imgData.data.set(frames[currentFrame]);
   tctx.putImageData(imgData, 0, 0);
   const dataURL = tmp.toDataURL('image/png');
-  const filename = `sprite_f${currentFrame+1}.png`;
   if (_inTauri) {
     _tauriNativeSave(filename, 'png', _dataURLtoBase64(dataURL));
   } else {
@@ -2543,6 +2550,9 @@ function _frameToPNG(frameData) {
 }
 
 function exportJSON() {
+  const defaultName = `sprite_${SIZE}x${SIZE}.json`;
+  const filename = _askFilename(defaultName);
+  if (!filename) return;
   const data = {
     version: 2,
     size: SIZE,
@@ -2550,7 +2560,6 @@ function exportJSON() {
     palette: PALETTE
   };
   const jsonStr = JSON.stringify(data);
-  const filename = 'sprite.json';
   if (_inTauri) {
     _tauriNativeSave(filename, 'json', btoa(jsonStr));
   } else {
@@ -2692,12 +2701,15 @@ function buildSpriteSheetCanvas() {
 }
 
 function exportSpriteSheet() {
+  const defaultName = `spritesheet_${SIZE}x${SIZE}.png`;
+  const filename = _askFilename(defaultName);
+  if (!filename) return;
   const sheet = buildSpriteSheetCanvas();
   const dataURL = sheet.toDataURL('image/png');
   if (_inTauri) {
-    _tauriNativeSave('spritesheet.png', 'png', _dataURLtoBase64(dataURL));
+    _tauriNativeSave(filename, 'png', _dataURLtoBase64(dataURL));
   } else {
-    _downloadFallback('spritesheet.png', dataURL);
+    _downloadFallback(filename, dataURL);
   }
   updateSpriteSheetInfo();
 }
@@ -2723,11 +2735,14 @@ function exportSpriteSheetSVG() {
     svg += `  </g>\n`;
   });
   svg += `</svg>`;
+  const defaultName = `spritesheet_${SIZE}x${SIZE}.svg`;
+  const filename = _askFilename(defaultName);
+  if (!filename) return;
   const blob = new Blob([svg], { type: 'image/svg+xml' });
   if (_inTauri) {
-    _blobToBase64(blob).then(b64 => _tauriNativeSave('spritesheet.svg', 'svg', b64));
+    _blobToBase64(blob).then(b64 => _tauriNativeSave(filename, 'svg', b64));
   } else {
-    _downloadFallback('spritesheet.svg', blob);
+    _downloadFallback(filename, blob);
   }
 }
 
@@ -2748,11 +2763,14 @@ function exportSpriteSheetMeta() {
     }))
   };
   const jsonStr = JSON.stringify(meta, null, 2);
+  const defaultName = `spritesheet_${SIZE}x${SIZE}_meta.json`;
+  const filename = _askFilename(defaultName);
+  if (!filename) return;
   if (_inTauri) {
-    _tauriNativeSave('spritesheet.json', 'json', btoa(jsonStr));
+    _tauriNativeSave(filename, 'json', btoa(jsonStr));
   } else {
     const blob = new Blob([jsonStr], { type: 'application/json' });
-    _downloadFallback('spritesheet.json', blob);
+    _downloadFallback(filename, blob);
   }
 }
 
@@ -2883,10 +2901,13 @@ function exportAnimGIF() {
   wb(0x3B); // Trailer
 
   const blob = new Blob([new Uint8Array(bytes)], { type: 'image/gif' });
+  const defaultName = `animation_${SIZE}x${SIZE}.gif`;
+  const filename = _askFilename(defaultName);
+  if (!filename) return;
   if (_inTauri) {
-    _blobToBase64(blob).then(b64 => _tauriNativeSave('animation.gif', 'gif', b64));
+    _blobToBase64(blob).then(b64 => _tauriNativeSave(filename, 'gif', b64));
   } else {
-    _downloadFallback('animation.gif', blob);
+    _downloadFallback(filename, blob);
   }
 }
 
