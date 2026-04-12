@@ -1061,14 +1061,21 @@
       </div>
     </div>
 
+    <!-- IMPORT -->
+    <div class="panel-block">
+      <div class="panel-label">インポート</div>
+      <div class="export-row">
+        <button class="tool-btn" onclick="importJSON()">↑ JSON読込</button>
+        <button class="tool-btn" onclick="importPNGToFrame()">↑ 画像読込</button>
+      </div>
+    </div>
+
     <!-- EXPORT -->
     <div class="panel-block">
       <div class="panel-label">エクスポート</div>
       <div class="export-row">
         <button class="tool-btn" onclick="exportPNG()">↓ PNG</button>
         <button class="tool-btn" onclick="exportJSON()">↓ JSON</button>
-        <button class="tool-btn" onclick="importJSON()">↑ JSON読込</button>
-        <button class="tool-btn" onclick="importPNGToFrame()">↑ 画像読込</button>
         <button class="tool-btn" onclick="copyDataURL()">⎘ URL</button>
       </div>
       <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
@@ -1577,7 +1584,7 @@ function renderRef() {
   refCtx.clearRect(0, 0, canvasSize, canvasSize);
   if (!refImage) return;
   refCtx.globalAlpha = refOpacity;
-  refCtx.imageSmoothingEnabled = true;
+  refCtx.imageSmoothingEnabled = false;
   const iw = refImage.naturalWidth, ih = refImage.naturalHeight;
   const baseScale = Math.min(canvasSize / iw, canvasSize / ih);
   const dw = iw * baseScale * refScale;
@@ -2540,7 +2547,6 @@ function exportJSON() {
     version: 2,
     size: SIZE,
     frames: frames.map(f => Array.from(f)),
-    images: frames.map(f => _frameToPNG(f)),
     palette: PALETTE
   };
   const jsonStr = JSON.stringify(data);
@@ -2563,26 +2569,36 @@ function handleImport(e) {
   const reader = new FileReader();
   reader.onload = ev => {
     try {
-      const data = JSON.parse(ev.target.result);
-      if (data.frames) {
-        // Ensure editor is started with correct size
-        const targetSize = data.size || SIZE || 16;
-        if (!document.getElementById('sizeSelector').classList.contains('hidden')) {
-          // Editor not started yet — start it first
-          startEditor(targetSize);
-        } else if (targetSize !== SIZE) {
-          // Editor running but different size — reinitialize
-          startEditor(targetSize);
-        }
-        frames = data.frames.map(f => new Uint8ClampedArray(f));
-        history = frames.map(f => [cloneFrameData(f)]);
-        historyIndex = frames.map(() => 0);
-        currentFrame = 0;
-        renderAll();
-        renderFrameRow();
+      const text = ev.target.result;
+      if (!text || text.length < 10) {
+        alert('ファイルが空または読み込めませんでした');
+        return;
       }
-    } catch(err) { alert('JSON読み込みエラー: ' + err.message); }
+      const data = JSON.parse(text);
+      if (!data.frames || !data.frames.length) {
+        alert('JSONにフレームデータがありません');
+        return;
+      }
+      // Ensure editor is started with correct size
+      const targetSize = data.size || 16;
+      if (!document.getElementById('sizeSelector').classList.contains('hidden')) {
+        startEditor(targetSize);
+      } else if (targetSize !== SIZE) {
+        startEditor(targetSize);
+      }
+      // Overwrite frames AFTER startEditor has initialized
+      frames = data.frames.map(f => new Uint8ClampedArray(f));
+      history = frames.map(f => [cloneFrameData(f)]);
+      historyIndex = frames.map(() => 0);
+      currentFrame = 0;
+      renderAll();
+      renderFrameRow();
+      alert(`読み込み完了: ${targetSize}×${targetSize}, ${frames.length}フレーム`);
+    } catch(err) {
+      alert('JSON読み込みエラー: ' + err.message);
+    }
   };
+  reader.onerror = () => alert('ファイル読み込みに失敗しました');
   reader.readAsText(file);
   e.target.value = '';
 }
