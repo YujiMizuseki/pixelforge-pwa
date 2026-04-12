@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pixelforge-v1.4.1';
+const CACHE_NAME = 'pixelforge-v1.5.0';
 const ASSETS = [
   './',
   './index.html',
