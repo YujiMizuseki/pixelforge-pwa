@@ -970,12 +970,18 @@
       <span class="draft-opacity-label">透明度</span>
       <input type="range" id="draftOpacitySlider" min="5" max="100" value="40"
         style="flex:1;accent-color:var(--accent);height:4px" oninput="onDraftOpacityChange()">
-      <span class="draft-opacity-label" id="draftOpacityVal">40%</span>
+      <input type="number" id="draftOpacityInput" min="5" max="100" value="40"
+        style="width:42px;font-size:10px;text-align:center;border:1px solid var(--border);border-radius:4px;padding:2px;font-family:inherit;"
+        oninput="onDraftOpacityInput()">
+      <span class="draft-opacity-label">%</span>
       <span class="draft-opacity-label" id="draftOpacityLabel" style="display:none"></span>
       <span class="draft-opacity-label" style="margin-left:6px">スケール</span>
       <input type="range" id="draftScaleSlider" min="10" max="400" value="100"
         style="flex:1;accent-color:var(--accent);height:4px" oninput="onDraftScaleChange()">
-      <span class="draft-opacity-label" id="draftScaleVal">100%</span>
+      <input type="number" id="draftScaleInput" min="10" max="400" value="100"
+        style="width:42px;font-size:10px;text-align:center;border:1px solid var(--border);border-radius:4px;padding:2px;font-family:inherit;"
+        oninput="onDraftScaleInput()">
+      <span class="draft-opacity-label">%</span>
       <button class="tool-btn" onclick="resetDraftTransform()" style="padding:4px 7px;font-size:10px">⊡</button>
     </div>
   </div>
@@ -1041,6 +1047,8 @@
         <button class="tool-btn" onclick="addFrame()">+ 追加</button>
         <button class="tool-btn" onclick="duplicateFrame()">⧉ 複製</button>
         <button class="tool-btn danger" onclick="deleteFrame()">- 削除</button>
+        <button class="tool-btn" onclick="moveFrameLeft()">◀</button>
+        <button class="tool-btn" onclick="moveFrameRight()">▶</button>
       </div>
       <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -1595,7 +1603,8 @@ function handleDraftImport(e) {
     refImage = img;
     refX = 0; refY = 0; refScale = 1.0;
     document.getElementById('draftScaleSlider').value = 100;
-    document.getElementById('draftScaleVal').textContent = '100%';
+    document.getElementById('draftScaleInput').value = 100;
+    document.getElementById('draftOpacityInput').value = 40;
     renderRef();
     showDraftControls(true);
   };
@@ -1612,7 +1621,7 @@ function clearDraft() {
 }
 
 function showDraftControls(visible) {
-  const ids = ['clearDraftBtn','draftOpacityLabel','draftOpacitySlider','draftOpacityVal',
+  const ids = ['clearDraftBtn','draftOpacityLabel','draftOpacitySlider',
                 'toolDraft','draftSliderRow'];
   ids.forEach(id => {
     const el = document.getElementById(id);
@@ -1623,21 +1632,37 @@ function showDraftControls(visible) {
 function resetDraftTransform() {
   refX = 0; refY = 0; refScale = 1.0;
   document.getElementById('draftScaleSlider').value = 100;
-  document.getElementById('draftScaleVal').textContent = '100%';
+  document.getElementById('draftScaleInput').value = 100;
   renderRef();
 }
 
 function onDraftOpacityChange() {
   const v = parseInt(document.getElementById('draftOpacitySlider').value);
   refOpacity = v / 100;
-  document.getElementById('draftOpacityVal').textContent = v + '%';
+  document.getElementById('draftOpacityInput').value = v;
+  renderRef();
+}
+
+function onDraftOpacityInput() {
+  let v = parseInt(document.getElementById('draftOpacityInput').value) || 5;
+  v = Math.max(5, Math.min(100, v));
+  refOpacity = v / 100;
+  document.getElementById('draftOpacitySlider').value = v;
   renderRef();
 }
 
 function onDraftScaleChange() {
   const v = parseInt(document.getElementById('draftScaleSlider').value);
   refScale = v / 100;
-  document.getElementById('draftScaleVal').textContent = v + '%';
+  document.getElementById('draftScaleInput').value = v;
+  renderRef();
+}
+
+function onDraftScaleInput() {
+  let v = parseInt(document.getElementById('draftScaleInput').value) || 10;
+  v = Math.max(10, Math.min(400, v));
+  refScale = v / 100;
+  document.getElementById('draftScaleSlider').value = v;
   renderRef();
 }
 
@@ -2119,7 +2144,7 @@ mainCanvas.addEventListener('wheel', e => {
   refScale = Math.max(0.1, Math.min(4, refScale + step));
   const pct = Math.round(refScale * 100);
   document.getElementById('draftScaleSlider').value = Math.min(400, pct);
-  document.getElementById('draftScaleVal').textContent = pct + '%';
+  document.getElementById('draftScaleInput').value = pct;
   renderRef();
 }, { passive: false });
 
@@ -2292,6 +2317,28 @@ function deleteFrame() {
   history.splice(currentFrame, 1);
   historyIndex.splice(currentFrame, 1);
   currentFrame = Math.min(currentFrame, frames.length - 1);
+  renderAll();
+  renderFrameRow();
+}
+
+function moveFrameLeft() {
+  if (currentFrame <= 0) return;
+  const swap = (arr, a, b) => { const t = arr[a]; arr[a] = arr[b]; arr[b] = t; };
+  swap(frames, currentFrame, currentFrame - 1);
+  swap(history, currentFrame, currentFrame - 1);
+  swap(historyIndex, currentFrame, currentFrame - 1);
+  currentFrame--;
+  renderAll();
+  renderFrameRow();
+}
+
+function moveFrameRight() {
+  if (currentFrame >= frames.length - 1) return;
+  const swap = (arr, a, b) => { const t = arr[a]; arr[a] = arr[b]; arr[b] = t; };
+  swap(frames, currentFrame, currentFrame + 1);
+  swap(history, currentFrame, currentFrame + 1);
+  swap(historyIndex, currentFrame, currentFrame + 1);
+  currentFrame++;
   renderAll();
   renderFrameRow();
 }
